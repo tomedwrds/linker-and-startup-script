@@ -395,19 +395,17 @@ void enable_proccessor_faults(void)
 //All the fault handler
 void HardFault_Handler(void)
 {
-	printf("Exception : Hardfault\n");
 	while(1);
 }
 
 
 void MemManage_Handler(void)
 {
-	printf("Exception : MemManage\n");
+
 	while(1);
 }
 
 void BusFault_Handler(void)
 {
-	printf("Exception : BusFault\n");
 	while(1);
 }

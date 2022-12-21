@@ -5,11 +5,14 @@
 #define SRAM_END    ((SRAM_START) + (SRAM_SIZE))
 
 #define STACK_START   SRAM_END
+//prototype of main
+int main(void);
 
+
+//Extern allows us to use the symbols we defined in the liker script
 extern uint32_t _etext;
 extern uint32_t _sdata;
 extern uint32_t _edata;
-extern uint32_t _la_data;
 
 extern uint32_t _sbss;
 extern uint32_t _ebss;
@@ -21,7 +24,10 @@ int main(void);
 void __libc_init_array(void);
 
 
-/* function prototypes of STM32F407x system exception and IRQ handlers */
+/* function prototypes of STM32F407x system exception and IRQ handlers
+Weak attribute allows the function to be overwritten by programmer
+and alias sets the function to a dummy function that can be overwritten  */
+
 
 void Reset_Handler(void);
 
@@ -116,7 +122,7 @@ void CRYP_IRQHandler             	(void) __attribute__ ((weak, alias("Default_Ha
 void HASH_RNG_IRQHandler         	(void) __attribute__ ((weak, alias("Default_Handler")));
 void FPU_IRQHandler              	(void) __attribute__ ((weak, alias("Default_Handler")));                          
 
-
+//Section attribute allows the vector table to be saved not in SRAM and instead in isr_vector
 uint32_t vectors[] __attribute__((section(".isr_vector")))   = {
 	STACK_START,
 	(uint32_t)Reset_Handler,
@@ -224,8 +230,33 @@ void Default_Handler(void)
 	while(1);
 }
 
+//The first function called when processor is reset or starts
 void Reset_Handler(void)
 {
+	//copy .data section to SRAM
+	//edata and sdata are just symbols ant dont have a alue assigned. Instead we want to access the memory location of the symbol
+	uint32_t size = (uint32_t)&_edata - (uint32_t)&_sdata;
+
+	//Goes through the whole data section and copues it into sram
+	uint8_t *pDst = (uint8_t*)&_sdata; //sram
+	uint8_t *pSrc = (uint8_t*)&_etext; //flash
 	
+	for(uint32_t i =0; i< size; i++ )
+	{
+		*pDst++ = *pSrc++;
+	}
+
+	//Sets the whole bss section to 0
+	size = (uint32_t)&_ebss - (uint32_t)&_sbss;
+	pDst = (uint8_t*)&_sbss;
+
+
+	for(uint32_t i =0; i< size; i++ )
+	{
+		*pDst++ = 0;
+	}
+    //intalize the .bss section to 0 in SRAM
+    //call main()
+	main();
 	
 }
